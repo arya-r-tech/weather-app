@@ -143,9 +143,11 @@ async function getWeather() {
         weatherResult.textContent = "Something went wrong. Please try again.";
     }
 }
-function getMyLocation() {
+
+    function getMyLocation() {
     if (!navigator.geolocation) {
-        weatherResult.textContent = "Geolocation is not supported by your browser.";
+        weatherResult.textContent =
+            "Geolocation is not supported by your browser.";
         return;
     }
 
@@ -155,57 +157,97 @@ function getMyLocation() {
         function (position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
 
             console.log("Latitude:", latitude);
             console.log("Longitude:", longitude);
-            console.log("Accuracy:", position.coords.accuracy, "meters");
+            console.log("Accuracy:", accuracy, "meters");
 
-            getWeatherByCoordinates(latitude, longitude);
+            if (accuracy > 50000) {
+                weatherResult.textContent =
+                    "Location is not accurate enough. Please try again.";
+                return;
+            }
+
+        getWeatherByCoordinates(latitude, longitude);
         },
-        function () {
-            weatherResult.textContent =
-                "Unable to get your location. Please allow location access.";
+
+        function (error) {
+            console.log("Location error:", error);
+            console.log("Error code:", error.code);
+            console.log("Error message:", error.message);
+
+            if (error.code === 1) {
+                weatherResult.textContent =
+                    "Location permission denied. Please allow location access.";
+            } else if (error.code === 2) {
+                weatherResult.textContent =
+                    "Location unavailable. Please try again.";
+            } else if (error.code === 3) {
+                weatherResult.textContent =
+                    "Location request timed out. Please try again.";
+            } else {
+                weatherResult.textContent =
+                    "Unable to get your location.";
+            }
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
         }
     );
 }
-
+    
 async function getWeatherByCoordinates(latitude, longitude) {
-    weatherResult.textContent = "Loading weather...";
-
     try {
         const weatherResponse = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m&hourly=precipitation_probability` 
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&hourly=precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`
         );
+
         const weatherData = await weatherResponse.json();
-       const locationResponse = await fetch(
-    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-);
 
-const locationData = await locationResponse.json();
-console.log("Latitude:", latitude);
-console.log("Longitude:", longitude);
-console.log("Location data:", locationData);
+        const locationResponse = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+        );
 
-const cityName =
-    locationData.locality ||
-    locationData.city ||
-    locationData.town ||
-    locationData.village ||
-    "Your Location";
+        const locationData = await locationResponse.json();
 
-const countryName =
-    locationData.countryName || "India"; 
+        console.log("Latitude:", latitude);
+        console.log("Longitude:", longitude);
+        console.log("Location data:", locationData);
 
+        console.log("Locality:", locationData.locality);
+        console.log("City:", locationData.city);
+        console.log("Town:", locationData.town);
+        console.log("Village:", locationData.village);
+
+        const cityName =
+            locationData.locality ||
+            locationData.city ||
+            locationData.town ||
+            locationData.village ||
+            "Your Location";
+
+        const countryName =
+            locationData.countryName || "India";
 
         weatherResult.innerHTML = `
             <h2>${cityName}, ${countryName} 📍</h2>
+
             <div class="weather-icon">🌤️</div>
+
             <h3>${weatherData.current.temperature_2m}°C</h3>
+
             <p>Feels Like: ${weatherData.current.apparent_temperature}°C</p>
-            <p>💧Humidity: ${weatherData.current.relative_humidity_2m}%</p>
-            <p>💨Wind Speed: ${weatherData.current.wind_speed_10m} km/h</p>
+
+            <p>💧 Humidity: ${weatherData.current.relative_humidity_2m}%</p>
+
+            <p>💨 Wind Speed: ${weatherData.current.wind_speed_10m} km/h</p>
+
             <p>🌧️ Chance of Rain: ${weatherData.hourly.precipitation_probability[0]}%</p>
-`;
+        `;
 
     } catch (error) {
         console.error(error);
