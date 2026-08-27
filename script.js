@@ -182,16 +182,19 @@ async function getWeatherByCoordinates(latitude, longitude) {
 );
 
 const locationData = await locationResponse.json();
-
+console.log("Latitude:", latitude);
+console.log("Longitude:", longitude);
 console.log("Location data:", locationData);
 
 const cityName =
-    locationData.city ||
     locationData.locality ||
+    locationData.city ||
+    locationData.town ||
+    locationData.village ||
     "Your Location";
 
 const countryName =
-    locationData.countryName || "India";  
+    locationData.countryName || "India"; 
 
 
         weatherResult.innerHTML = `
