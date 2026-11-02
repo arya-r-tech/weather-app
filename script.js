@@ -153,22 +153,35 @@ async function getWeather() {
 
     weatherResult.textContent = "Getting your location...";
 
+   function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+
     navigator.geolocation.getCurrentPosition(
-        function (position) {
+        async (position) => {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
-            const accuracy = position.coords.accuracy;
 
             console.log("Latitude:", latitude);
             console.log("Longitude:", longitude);
-            console.log("Accuracy:", accuracy, "meters");
+            console.log("Accuracy:", position.coords.accuracy, "meters");
 
-            if (accuracy > 50000) {
-                weatherResult.textContent =
-                    "Location is not accurate enough. Please try again.";
-                return;
-            }
-
+            // Use your existing function that fetches
+            // weather using latitude and longitude here.
+        },
+        (error) => {
+            alert("Unable to detect your location. Please try again.");
+            console.error(error.message);
+        },
+        {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 20000
+        }
+    );
+}
         getWeatherByCoordinates(latitude, longitude);
         },
 
