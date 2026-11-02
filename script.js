@@ -144,7 +144,8 @@ async function getWeather() {
     }
 }
 
-    function getMyLocation() {
+    
+function getMyLocation() {
     if (!navigator.geolocation) {
         weatherResult.textContent =
             "Geolocation is not supported by your browser.";
@@ -153,46 +154,25 @@ async function getWeather() {
 
     weatherResult.textContent = "Getting your location...";
 
-   function getCurrentLocation() {
-    if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser.");
-        return;
-    }
-
     navigator.geolocation.getCurrentPosition(
-        async (position) => {
+        async function (position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
 
             console.log("Latitude:", latitude);
             console.log("Longitude:", longitude);
-            console.log("Accuracy:", position.coords.accuracy, "meters");
+            console.log("Accuracy:", accuracy, "meters");
 
-            // Use your existing function that fetches
-            // weather using latitude and longitude here.
-        },
-        (error) => {
-            alert("Unable to detect your location. Please try again.");
-            console.error(error.message);
-        },
-        {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 20000
-        }
-    );
-}
-        getWeatherByCoordinates(latitude, longitude);
+            await getWeatherByCoordinates(latitude, longitude);
         },
 
         function (error) {
-            console.log("Location error:", error);
-            console.log("Error code:", error.code);
-            console.log("Error message:", error.message);
+            console.log("Location error:", error.message);
 
             if (error.code === 1) {
                 weatherResult.textContent =
-                    "Location permission denied. Please allow location access.";
+                    "Location permission denied. Allow location access.";
             } else if (error.code === 2) {
                 weatherResult.textContent =
                     "Location unavailable. Please try again.";
@@ -201,17 +181,18 @@ async function getWeather() {
                     "Location request timed out. Please try again.";
             } else {
                 weatherResult.textContent =
-                    "Unable to get your location.";
+                    "Unable to detect your location.";
             }
         },
 
         {
             enableHighAccuracy: true,
-            timeout: 15000,
+            timeout: 20000,
             maximumAge: 0
         }
     );
 }
+
     
 async function getWeatherByCoordinates(latitude, longitude) {
     try {
@@ -236,12 +217,12 @@ async function getWeatherByCoordinates(latitude, longitude) {
         console.log("Town:", locationData.town);
         console.log("Village:", locationData.village);
 
-        const cityName =
-            locationData.locality ||
-            locationData.city ||
-            locationData.town ||
-            locationData.village ||
-            "Your Location";
+       const cityName =
+    locationData.city ||
+    locationData.town ||
+    locationData.village ||
+    locationData.locality ||
+    "Your Location";
 
         const countryName =
             locationData.countryName || "India";
